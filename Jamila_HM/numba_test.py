@@ -66,11 +66,11 @@ def go_fast(a): # Function is compiled to machine code when called the first tim
 x = np.arange(10000 ** 2).reshape(10000, 10000)
 
 tot_time_s = 0
-for i in range(100):
+for i in range(1000):
    tot_time_s += timer(standard)
 
 tot_time_f = 0 
-for i in range(20):
+for i in range(1000):
     tot_time_f += timer(go_fast)
 
 
