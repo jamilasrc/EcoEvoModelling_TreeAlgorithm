@@ -23,11 +23,6 @@ import copy
 import pickle
 
 from numba import njit
-# numba import jit
-
-import sys
-
-
 
 Olive = '#CAFF70'
 Blue = '#2CBDFE'
@@ -53,6 +48,8 @@ updated_colour = [Blue, Baby_Pink, Green,Sea, Olive, Purple, Violet,Dark_blue,Ma
 # plt.rcParams['axes.prop_cycle'] = plt.cycler(color = updated_colour)
 
 ### Mutation functions ###
+
+# Delete, not called
 def mutation_freq(mut_prob, n, size):
     '''
     A function which gives the number of mutants in a sub-population based on binomial distribution
@@ -68,13 +65,16 @@ def mutation_freq(mut_prob, n, size):
     num_mutants = np.random.binomial(n = n, p = mut_prob,size=size) # binomial distribution for subspecies
     return num_mutants
 
+# Keep, called once by rand_mut_param, but this function seems to be important.
 def mutation_distribution():             
 # Author: Alex Yuan
     return np.round(np.random.normal(),2)
 
+# Keep
 def null_distribution():             
     return -1
 
+# Keep
 def mutation_distribution2(mutants,s_pos,s_neg):
     '''
     The distribution from Li et.al paper (from Dunham lab haploid data) for selecting mutation value for parameter fp
@@ -98,6 +98,7 @@ def mutation_distribution2(mutants,s_pos,s_neg):
     
     return m 
 
+# Keep
 def rand_mut_param(min_param, max_param, mutation_distribution):
     '''
     Selects a random parameter and its corresponding random mutation on the selected parameter
@@ -114,6 +115,7 @@ def rand_mut_param(min_param, max_param, mutation_distribution):
     return select_parameter, mutation_change
 
 
+# Keep
 def ancestor_min(table,pointer,number):
     
     '''
@@ -130,6 +132,7 @@ def ancestor_min(table,pointer,number):
     
     return table1
 
+# Keep
 def add_subpop(table, pointer, select_parameter, mutation_change, number):
     '''
     A function which generates a new sub-population with 1 cell resulting from mutation and its closeout line  
@@ -153,7 +156,7 @@ def add_subpop(table, pointer, select_parameter, mutation_change, number):
 
     return table_final
 
-
+# Remove? Can't see it being called in any functions of interest
 def mutation(table,min_param,max_param,mutation_p,s_neg,s_pos):
     '''
   A function which adds mutation to a random parameter of a population
@@ -202,7 +205,6 @@ def sparse(table,min_param,max_param,initial_condition):
     Output:
         A csr_matrix form which stores the content of the table  
     '''
-    #breakpoint()
     col = np.concatenate([np.arange(0,max_param),table['Parameter']]) # columns are the parameter values
     row = np.concatenate([np.int64(np.zeros(max_param)), np.arange(len(table))]) # index of the rows in the table
     data = np.concatenate([initial_condition, table['Change']]) # the changes from the table usually after mutation
@@ -232,11 +234,6 @@ def dense(sparse):
     Output: 
         The total dense matrix with all the values of the parameters for all rows (subpopulation). 
     '''
-    # np.cumsum(sparse[0,x:y].toarray(), axis=0) will convert part of the matrix to dense
-    # scipy.sparse.vstack((a,b)) will stack csr_matrices a and b together
-    # np.cumsum(sparse[0,0:y].toarray(), axis=0) and np.cumsum(sparse[0,y:].toarray(), axis=0) produces the same result as 
-    #   np.cumsum(sparse.toarray(), axis=0), so ancestor row does not need to be known 
-    #breakpoint() 
     return np.cumsum(sparse.toarray(), axis=0)
 
 def sparse_dense(table,max_param,ancestor_row):
@@ -252,16 +249,9 @@ def sparse_dense(table,max_param,ancestor_row):
         The dense matrix with updated population sizes after mutation.
     '''
     # create sparse matrix from the table with (ancestor + 1 round of mutation)
-    #breakpoint()
-   #breakpoint()
     Z = sparse(table, 0,max_param,ancestor_row) # creating a sparse form from the resulting mutation 
-    #print('scipy.sparse.csr_matrix size = ',Z.data.nbytes)
     X = dense(Z) # total dense matrix for species 1 after 1 round of mutation
-    #('dense matrix size = ',X.nbytes)
-    #print("Dense=",X.shape)
     return X
-
-
 
 def biomass(table):
     '''
@@ -525,9 +515,7 @@ def cut_species(s,table):
         Ancestor and its subpopulation cut at the correct points. 
         If M species have M1 and M2 subpopulation and species H zero, cut points are [2,0]
     '''
-    
     s = np.array(s).flatten() # 1d array of biomass
-    #breakpoint()
     cuts = [table[i].shape[0] for i in range(len(table))] # how many subpopulation branching from each ancestor
     s_all = []
     upd = np.arange(len(cuts)) # the ancestor index, if there are two ancestors, [0,1] first and second ancestor 0 and 1
@@ -909,7 +897,7 @@ def cell_cycle_list_trapezoid(params1,c0,table,mut_prob,s_neg,s_pos,t,timestep):
     return c, divided_cell 
 
 ### Dynamics of the HM-community ###
-#@njit
+
 def HM_list(t,SC,params_HM):
     '''
     The growth rate of H and M species 
@@ -920,10 +908,11 @@ def HM_list(t,SC,params_HM):
     Output:
         The growth rate of species H followed by M
     '''
-    time_s = time.time()
-    
+       
     n_s = params_HM['num_spec']
     S = np.reshape(SC[:n_s],[n_s,1])  
+    print(S.shape)
+    breakpoint()
     R = SC[-3]
     B = SC[-2]
     P = SC[-1]
@@ -936,7 +925,6 @@ def HM_list(t,SC,params_HM):
     alpha_HM = params_HM['alpha']
     beta_HM = params_HM['beta']
     fp = params_HM['fp']
-   # print('fp=',fp)
     
     death = params_HM['death']
     death_H = death[:,:1]
@@ -961,26 +949,12 @@ def HM_list(t,SC,params_HM):
 
     g_M = np.multiply(g_coeff,(np.divide(1, R_M + 1) + np.divide(1, B_M + 1)))
     growth_M = np.multiply((1 - fp), g_M)
-    #print('growth_M=',np.divide(growth_M,g_M))
 
     c_R = alpha_HM[:,0:1]
     c_B = alpha_HM[:,1:2]
-    
-    #print('S=',S)
 
     # To include stochastic death process instead of deterministic, as seen in the previous line
-    '''
-    @njit
-    def nmba_tst_gv():
-        dH = np.multiply((growth_H*g_Hmax),S)
-        return dH
-        
-    dHdt2 = nmba_tst_gv()
-    '''
     dHdt = np.multiply((growth_H*g_Hmax),S) 
-    #print({'dHdt':dHdt,'dHdt2':dHdt2})
-   # breakpoint()
-    
     dMdt = np.multiply((growth_M*g_Mmax),S)
     dSdt = dHdt + dMdt
     dSdt = dSdt.flatten()
@@ -996,12 +970,10 @@ def HM_list(t,SC,params_HM):
     
     dSCdt = np.concatenate((dSdt,dCdt)) # The change in biomass followed by rate of change of chemicals
 
-    time_end = time.time()
-    #print(time_end-time_s)
-    #breakpoint()
     return dSCdt
 
 
+#@njit
 def HM_list_numba(t,SC,params_HM):
     '''
     The growth rate of H and M species 
@@ -1012,9 +984,7 @@ def HM_list_numba(t,SC,params_HM):
     Output:
         The growth rate of species H followed by M
     '''
-    time_s = time.time()
-    
-    
+       
     n_s = params_HM['num_spec']
     S = np.reshape(SC[:n_s],[n_s,1])  
     R = SC[-3]
@@ -1040,8 +1010,6 @@ def HM_list_numba(t,SC,params_HM):
     K_HR = K_HM[:,:1]
     g_H = np.divide(R,(R + K_HR))
     growth_H = g_H
-    
-    #breakpoint()
 
     # M species 
     R_M = (np.divide(R, K_HM[:,0:1])) # first column always R
@@ -1060,141 +1028,22 @@ def HM_list_numba(t,SC,params_HM):
     c_B = alpha_HM[:,1:2]
 
     # To include stochastic death process instead of deterministic, as seen in the previous line
+    #test_array = np.zeros((2,1))
+    #test_array[1] = 2
     
+    dH = np.zeros((S.shape))
+    dM = np.zeros((S.shape))
     
-    '''
-    @njit
-    def chunked_calc():
+   # for s_i in range(S.shape[0]):
+        #print(np.multiply((growth_H*g_Hmax),S[s_i])
+        #dH[s_i] = np.multiply((growth_H*g_Hmax),S[s_i])
+        #dM[s_i] = np.multiply((growth_M*g_Mmax),S[s_i])
         
-        chunks = np.arange(0,S.shape[0],20)
-        if(np.isin(chunks,S.shape[0])==False):
-            chunks = np.append(chunks,S.shape[0])
-            
-        dH = np.zeros((S.shape))
-        dM = np.zeros((S.shape))
-        dR = np.zeros((S.shape))
-        dB = np.zeros((S.shape))
-        dP = np.zeros((S.shape)) 
-            
-        for c_i in range(len(chunks))[1:]:
-            
-            c = chunks[c_i]
-            c_mnsi = chunks[c_i-1]
-            
-            dH[c_mnsi:c] = np.multiply((growth_H[c_mnsi:c]*g_Hmax[c_mnsi:c]),S[c_mnsi:c])
-            dM[c_mnsi:c] = np.multiply((growth_M*g_Mmax),S)
-            dR[c_mnsi:c] = -np.multiply(np.multiply((g_H[c_mnsi:c]*g_Hmax[c_mnsi:c]), c_R[c_mnsi:c]), S[c_mnsi:c]) - np.multiply(np.multiply((g_M[c_mnsi:c]*g_Mmax[c_mnsi:c]), c_R[c_mnsi:c]), S[c_mnsi:c])
-            dB[c_mnsi:c] = np.multiply((g_H[c_mnsi:c]*g_Hmax[c_mnsi:c]), S[c_mnsi:c]) - np.multiply(np.multiply((g_M[c_mnsi:c]*g_Mmax[c_mnsi:c]), S[c_mnsi:c]), c_B[c_mnsi:c])
-            dP[c_mnsi:c] = np.multiply(np.multiply((g_M[c_mnsi:c]*g_Mmax[c_mnsi:c]), fp[c_mnsi:c]), S[c_mnsi:c])
-            
-            
-        
-        dR = np.array([np.sum(dR)])
-        dB = np.array([np.sum(dB)])
-        dP = np.array([np.sum(dP)])
-    
-        return dH, dM, dR, dB, dP
-    '''
-    
-    #breakpoint()
-    
-    @njit
-    def for_numba():
-        
-        dS = np.zeros(S.shape[0])
-        # dS[i] = dH[i] + dM[i]
-        #   dH[i] = np.multiply((growth_H[i]*g_Hmax[i]),S[i]) (1st term of dS[i] calculation)
-        #   dM[i] = np.multiply((growth_M[i]*g_Mmax[i]),S[i]) (2nd term)
-        
-        dR = 0.0
-        dB = 0.0
-        dP = 0.0
-        
-        for i in range(S.shape[0]):
-            
-            dS[i] += (np.multiply((growth_H[i][0]*g_Hmax[i][0]),S[i][0]) + np.multiply((growth_M[i][0]*g_Mmax[i][0]),S[i][0]))
-            
-            dR += -np.multiply(np.multiply((g_H[i][0]*g_Hmax[i][0]), c_R[i][0]), S[i][0]) - np.multiply(np.multiply((g_M[i][0]*g_Mmax[i][0]), c_R[i][0]), S[i][0])
-            dB += np.multiply((g_H[i][0]*g_Hmax[i][0]), S[i][0]) - np.multiply(np.multiply((g_M[i][0]*g_Mmax[i][0]), S[i][0]), c_B[i][0])
-            dP += np.multiply(np.multiply((g_M[i][0]*g_Mmax[i][0]), fp[i][0]), S[i][0])
-
-        dC = np.array([dR,dB,dP])
-        
-        #return dC
-        return np.concatenate((dS,dC))
-    
-    to_compile = for_numba()
-    time_s_n = time.time()
-    dSdC = for_numba()
-    time_e_n = time.time()
-    
-    '''
-    @njit
-    def array_for_numba():
-        
-        # dS = dH + dM
-        #   dH[i] = np.multiply((growth_H[i]*g_Hmax[i]),S[i]) (1st term of dS[i] calculation)
-        #   dM[i] = np.multiply((growth_M[i]*g_Mmax[i]),S[i]) (2nd term)
-        
-        dS = np.zeros(S.shape[0])
-
-        for i in range(S.shape[0]):
-            
-            dS[i] += (np.multiply((growth_H[i][0]*g_Hmax[i][0]),S[i][0]) + np.multiply((growth_M[i][0]*g_Mmax[i][0]),S[i][0]))
-        
-        return dS
-            
-    to_compile2 = array_for_numba()
-    time_s_n2 = time.time()
-    dS1 = array_for_numba()
-    time_e_n2 = time.time()
-    
-    
-    
-    # for loop for Numba (not convinced this will be faster)
-    @njit
-    def for_numba():
-        dH = np.zeros((S.shape))
-        dM = np.zeros((S.shape))
-        dR = np.zeros((S.shape))
-        dB = np.zeros((S.shape))
-        dP = np.zeros((S.shape))   
-        
-        #print('S=',S)
-        
-        for s_i in range(S.shape[0]):
-            #print(np.multiply((growth_H*g_Hmax),S[s_i])[0])
-           # breakpoint()
-            dH[s_i] = np.multiply((growth_H[s_i]*g_Hmax[s_i]),S[s_i])
-            dM[s_i] = np.multiply((growth_M[s_i]*g_Mmax[s_i]),S[s_i])
-            
-            #np.multiply((g_H[s_i]*g_Hmax[s_i]), S[s_i])
-            dR[s_i] = -np.multiply(np.multiply((g_H[s_i]*g_Hmax[s_i]), c_R[s_i]), S[s_i]) - np.multiply(np.multiply((g_M[s_i]*g_Mmax[s_i]), c_R[s_i]), S[s_i])
-            dB[s_i] = np.multiply((g_H[s_i]*g_Hmax[s_i]), S[s_i]) - np.multiply(np.multiply((g_M[s_i]*g_Mmax[s_i]), S[s_i]), c_B[s_i])
-            dP[s_i] = np.multiply(np.multiply((g_M[s_i]*g_Mmax[s_i]), fp[s_i]), S[s_i])
-        
-        
-        dR = np.array([np.sum(dR)])
-        dB = np.array([np.sum(dB)])
-        dP = np.array([np.sum(dP)])
-        
-        
-        dSdt = dH + dM
-        dSdt = dSdt.flatten()
-        
-        dCdt = np.array([dR[0],dB[0],dP[0]])
-        
-        #return dH
-        return dSdt, dCdt
-    
-    #r1,r2 = for_numba()
-    '''
-    
-    time_s_v = time.time()
-    
-    dHdt = np.multiply((growth_H*g_Hmax),S)
+    dHdt = np.multiply((growth_H*g_Hmax),S) 
     dMdt = np.multiply((growth_M*g_Mmax),S)
-
+    print("Dydt results" % {'dH':dH,'dHdt':dHdt,'dM':dM,'dMdt':dMdt})
+    breakpoint()
+   
     dSdt = dHdt + dMdt
     dSdt = dSdt.flatten()
 
@@ -1205,27 +1054,11 @@ def HM_list_numba(t,SC,params_HM):
           -sum(np.multiply(np.multiply((g_M*g_Mmax), S), c_B));
     dPdt = sum(np.multiply(np.multiply((g_M*g_Mmax), fp), S));
     
-    dCdt = np.array([dRdt[0],dBdt[0],dPdt[0]])
+    dCdt = np.array([dRdt[0],dBdt[0],dPdt[0]]) # The rate of change chemicals with convention R, B, P
     
     dSCdt = np.concatenate((dSdt,dCdt)) # The change in biomass followed by rate of change of chemicals
-    
-    time_e_v = time.time()
-    
-    #print(np.allclose(dCdt,dSCdt,rtol=1e-03))
-    
-    #print({'Time with numba':(time_e_n-time_s_n),'Time with numpy calc':(time_e_v-time_s_v)})
-    #breakpoint()
-    #print({'dSdC':dSdC,'dSCdt':dSCdt})
-    
-    
-    #breakpoint()
-    
-    return dSdC
-   #return dSCdt
 
-
-
-
+    return dSCdt
 
 def death_cell(table,death_rate,timestep):
     '''
@@ -1567,8 +1400,7 @@ def mutation_HM_null(table,matrix_form,ind,mut_param,min_param,max_param):
                     table = ancestor_min(table,d[0],null_mut)
                     table =  add_subpop(table,d[0], parameter, change,null_mut)
     return table
-
-     
+        
 
 def cell_cycle_HM(table,params1,c0,mut_param,t):
     '''
@@ -1583,42 +1415,13 @@ def cell_cycle_HM(table,params1,c0,mut_param,t):
     Output:
         The updated chemical concentration after species interaction, and the table with updated biomass ('Length' and 'Number')  
     '''
-    
-    # This section of code is independent of the sparse vs dense matrix, so can be kept as is. This is because params1 
-    #   is not updated per cell cycle, whereas table is
     param_names = [i for i in params1 if i != 'num_spec'] # list of all names of the parameters in dictionary
     ncols1 = get_ncols(params1,param_names) # getting the number of columns for each parameter, K, rho etc.
     params_as_matrix = params_dict_to_matrix(params1,param_names) # combining all the columns into one big matrix
     #print(f'{params_as_matrix=}')
 
     max_param = params_as_matrix.shape[1] # numer of columns i.e parameters columns K, r0, alpha, beta, rho_plus, rho_minus
-    
-    # Chunking algorithm goes here
-    #   Chunking algorithm works because there are no direct species interactions, dSi/dt and dCl/dt are sums of individual species dynamics.
-    #       However, this means the chunking algorithm won't work if I use simpler models with direct species interactions as appose to chemical mediators
-    #   Considerations: Alex said Indra's simulations handled up to 10,000 genotypes, so to chunk like so. However, we need to make sure we correspond to 
-    #       a cut point so that complete species genotypes are transformed into the dense form. 
-    #       sparse_dense could be used, but might be easier to separate. Doesn't really matter.
-    # Problem - cell cycle functions use table as an input. This is a memory intensive data structure. Ideally, the function
-    #   argument should be the sparse matrix. However, no sparse matrix will initially exist. 
-    
-    #breakpoint()
-    #print('table=',table)
-    #print('params=',params_as_matrix)
-    
-    #print(c0)
-   #breakpoint()
-   #print('table size = ',sys.getsizeof(table[0]))
-    array_test = np.matrix([0,1,0,40])
-    print('np.array',array_test.nbytes)
-   #print('dataframe as np.matrix size = ',array_test.nbytes)
-   #array_test2 = table[0].to_numpy
-   #array_test3 = np.matrix([0,1,0,40])
-   #print('dataframe as np.matrix size = ',sys.getsizeof(array_test))
-   
-   #print('dataframe.to_numpy = ',sys.getsizeof(array_test2)) 
-   #print('array no conversion from dataframe =',sys.getsizeof(array_test3)) 
-    
+
     X = np.concatenate([sparse_dense(table[i],max_param,params_as_matrix[i]) for i in range(len(table))]) # table to matrix form
 
     biomass0 = np.concatenate([biomass(table[i]) for i in range(len(table))]) # compute biomass = cell number x cell length
@@ -1639,8 +1442,8 @@ def cell_cycle_HM(table,params1,c0,mut_param,t):
     Output: 
         The correct equation format to be solved in solve_ivp, where input is time and initial condition
         '''
-        return HM_list(t,sc,dynamic_tot0)
-        #return HM_list_numba(t,sc,dynamic_tot0) 
+        #return HM_list(t,sc,dynamic_tot0) 
+        return HM_list_numba(t,sc,dynamic_tot0)
 
     y = dynamics_exact(dydt, y0, t)
     n_c = len(c0) 
@@ -1649,8 +1452,6 @@ def cell_cycle_HM(table,params1,c0,mut_param,t):
 
     # Stochastic death at the end of cycle 
     table_upd = death_table(params1,table,t)
-    #breakpoint()
-    
 
     s_cut = cut_species(s,table_upd) # cutting combined species array to distinguish biomass of each species
     division = [growth__(s_cut[i],table_upd[i]) for i in range(len(table_upd))]
@@ -1662,208 +1463,6 @@ def cell_cycle_HM(table,params1,c0,mut_param,t):
     new_table = [mutation_HM_null(table_divided[i],matrix_form[i],ind[i],mut_param,0,1) for i in range(len(table_divided))]
 
     return new_table,c,s
-
-
-def initial_condition(max_param):
-    
-    '''
-    Determines initial condition values for each parameter, selects ancestral values for each parameter randomly.
-    This method draws from a uniform random distribution. For example used to select random affinity for chemical absorption rate etc. 
-    Input:
-        max_param - maximum number of parameter, total parameters. Type: int
-    Output:
-        Initial values of parameters of ancestor at t=0. Type: 1d array 
-    ''' 
-    return np.random.uniform(size = max_param)  
-
-def sparse_array(table,array,array_cols,min_param,max_param,initial_condition):
-    
-    '''
-    Function which converts table into the sparse csr_matrix form
-    Input:
-        table - table to be stored as sparse csr_matrix form. Type: pandas table [Parameter,Change,Number,Length]
-        min_param - the first parameter index. Type: int (typically 0).
-        max_param - the maximum parameter value, the total number of parameters. Type: int.
-        initial - initial conditions with initial values for all parameters, max_param number. Type: 1d array.
-    Output:
-        A csr_matrix form which stores the content of the table  
-    '''
-    #breakpoint()
-    col = np.append(np.arange(0,max_param),array[:,array_cols['Parameter']]).astype('int64')
-    row = np.append(np.zeros(max_param),np.arange(array.shape[0])).astype('int64')
-    data = np.append(initial_condition,array[:,array_cols['Change']])
-    
-    col2 = np.concatenate([np.arange(0,max_param),table['Parameter']]) # columns are the parameter values
-    row2 = np.concatenate([np.int64(np.zeros(max_param)), np.arange(len(table))])
-    data2 = np.concatenate([initial_condition, table['Change']]) # the changes from the table usually after mutation
-    
-    return csr_matrix((data,(row,col)))
-
-
-def dense(sparse):
-    '''
-    Takes in a csr_matrix format to get the dense form. Calculates the actual parameter values for each subpopulation 
-    Input: 
-        dense - A sparse csr_matrix format which contains initial parameter values and changes from mutation. Type: csr matrix 
-    Output: 
-        The total dense matrix with all the values of the parameters for all rows (subpopulation). 
-    '''
-    # np.cumsum(sparse[0,x:y].toarray(), axis=0) will convert part of the matrix to dense
-    # scipy.sparse.vstack((a,b)) will stack csr_matrices a and b together
-    # np.cumsum(sparse[0,0:y].toarray(), axis=0) and np.cumsum(sparse[0,y:].toarray(), axis=0) produces the same result as 
-    #   np.cumsum(sparse.toarray(), axis=0), so ancestor row does not need to be known 
-    #breakpoint()
-    return np.cumsum(sparse.toarray(), axis=0)
-
-def sparse_dense_array(table,array,array_cols,max_param,ancestor_row):
-    '''
-    Combining the sparse to dense operation as one step to simplify later parts.
-    Input: 
-        table - table with updated population sizes and rows. Type: pandas table [Parameter,Change,Number,Length].
-        max_param - the total number of parameters, based on number of chemicals. Type: int
-                    where the columns of the matrix represent all the parameters: K, r0, alpha, beta, rho_plus, rho_minus
-        ancestor_row - initial value of each parameter for the ancestral population. Type: 1d array
-                       Single row with the total number of parameters column.
-    Output: 
-        The dense matrix with updated population sizes after mutation.
-    '''
-    # create sparse matrix from the table with (ancestor + 1 round of mutation)
-    #breakpoint()
-   #breakpoint()
-    Z = sparse_array(table,array,array_cols,0,max_param,ancestor_row) # creating a sparse form from the resulting mutation 
-    #print('scipy.sparse.csr_matrix size = ',Z.data.nbytes)
-    X = dense(Z) # total dense matrix for species 1 after 1 round of mutation
-    #print('dense matrix size = ',X.nbytes)
-    #print("Dense=",X.shape)
-    return X
-
-
-def comm_dynamics_new(table,params1,c0,mut_param,t):
-    '''
-    The complete cell cycle in the steps: dynamcs, death, cell division, and mutation. Where mutation occurs only if cells have divided.
-    Input:
-        sparse_mats - initial starting species composition: types of species, the number of cells, the length of cells. 
-            Columns = ['Parameter','Change','Number','Length'] 
-        table - Indra's table from before. For checking
-        Type: numpy matrix
-        params1 - the initial conditions for parameters, number of species, K, rho_plus, rho_minus, r0, alpha, beta. 
-            I think this should just be in the matrix form. When we run the model, we should definitely just do that.
-        c0 - the initial chemical concentration, later will be updated by dynamics calculation      
-        mut_param - the parameters of mutation [s_neg,s_pos,mutation_p,null_prob]. Type: dictionary
-        t - the time for maturation of cells
-        chunk_size = no. of species per chunk of dense matrix
-    Output:
-        The updated chemical concentration after species interaction, and the table with updated biomass ('Length' and 'Number')  
-    '''
-    
-   # print(table)
-    #breakpoint()
-    
-    # This section of code is independent of the sparse vs dense matrix, so can be kept as is. This is because params1 
-    #   is not updated per cell cycle, whereas table is
-    param_names = [i for i in params1 if i != 'num_spec'] # list of all names of the parameters in dictionary
-    ncols1 = get_ncols(params1,param_names) # getting the number of columns for each parameter, K, rho etc.
-    params_as_matrix = params_dict_to_matrix(params1,param_names) # combining all the columns into one big matrix
-    
-    max_param = params_as_matrix.shape[1] # numer of columns i.e parameters columns K, r0, alpha, beta, rho_plus, rho_minus
-    
-    #table2 = table
-    #table2[0] = pd.concat([table2[0],pd.DataFrame(data=dict(zip(table2[0].columns.tolist(),np.array([1,0.13,5,1]))),index=[0])])
-    
-    table_to_array = []
-    
-    #for i in range(len(table2)):
-
-    #    table_to_array.append(np.matrix(table2[i]).astype(dtype='float64'))
-        
-    #array_cols = dict(zip(table2[0].columns.tolist(),np.arange(table2[0].shape[1])))
-    
-    # = np.concatenate([sparse_dense_array(table2[i],table_to_array[i],array_cols,max_param,params_as_matrix[i]) for 
-     #                    i in range(len(table_to_array))])
-    #X = np.concatenate([sparse_dense(table2[i],max_param,params_as_matrix[i]) for i in range(len(table2))]) # table to matrix form
-    
-    for i in range(len(table)):
-
-        table_to_array.append(np.matrix(table[i]).astype('float64'))
-        
-    array_cols = dict(zip(table[0].columns.tolist(),np.arange(table[0].shape[1])))
-    
-    X2 = np.concatenate([sparse_dense_array(table[i],table_to_array[i],array_cols,max_param,params_as_matrix[i]) for 
-                         i in range(len(table_to_array))])
-    
-    X = np.concatenate([sparse_dense(table[i],max_param,params_as_matrix[i]) for i in range(len(table))]) # table to matrix form
-  
-    breakpoint()
-
-    # LEAVE AS IS, BUT FOR COEXISTENCE MODEL CALCULATE FROM DENSE MATRIX
-    def biomass2(array):
-        
-        b_mass = np.multiply(array[:,array_cols['Number']],array[:,array_cols['Length']])
-        
-        return b_mass
-    
-    @njit
-    def biomass2_n(array):
-        
-        b_mass = np.multiply(array[:,2],array[:,3])
-        
-        return b_mass
-
-    for i in range(len(table_to_array)):
-        
-        table_to_array[i] = np.hstack((table_to_array[i],biomass2_n(table_to_array[i])))
-
-
-    #biomass0_3 = np.concatenate(biomass2_n)
-
-
-    #biomass0_2 = np.concatenate([biomass2(table_to_array[i]) for i in range(len(table_to_array))]).A1
-    biomass0_2 = np.concatenate([biomass2_n(table_to_array[i]) for i in range(len(table_to_array))])
-    #biomass0_3 = np.append(table_to_array)
-    biomass0 = np.concatenate([biomass(table[i]) for i in range(len(table))]) # compute biomass = cell number x cell length
-    
-    biomass_update = np.reshape(biomass0,(len(biomass0),1))
-
-    dynamic_tot0 = params_matrix_to_dict(X, param_names, ncols1) # convert big matrix to small matricies for dynamics calculation
-    dynamic_tot0['s'] = biomass_update
-    #print(f'{dynamic_tot0=}')
-
-    y0 = np.concatenate((biomass0, c0)) # initial conditions for dynamics calculations
-
-    def dydt(t, sc): 
-        '''
-    Changing format to be solved by numerical integration. The format needs the ODE to have 2 variables
-    Input:
-        t - time span to solve the ODE
-        sc - initial condition values for all the species and chemicals (array of length n_s + n_c)
-    Output: 
-        The correct equation format to be solved in solve_ivp, where input is time and initial condition
-        '''
-        return HM_list(t,sc,dynamic_tot0)
-        #return HM_list_numba(t,sc,dynamic_tot0) 
-
-    y = dynamics_exact(dydt, y0, t)
-    n_c = len(c0) 
-    s = y.y.T[-1:,:-n_c][0] # Biomass final
-    c = y.y.T[-1:,-n_c:][0] # Chemicals final
-
-    # Stochastic death at the end of cycle 
-    table_upd = death_table(params1,table,t)
-    #breakpoint()
-    
-
-    s_cut = cut_species(s,table_upd) # cutting combined species array to distinguish biomass of each species
-    division = [growth__(s_cut[i],table_upd[i]) for i in range(len(table_upd))]
-
-    ind = [division[i][1] for i in range(len(division))] # the indexes of the divided cells for all species 
-    table_divided = [division[i][0] for i in range(len(division))] # the table after cell division accourding to length
-    matrix_form = [sparse_dense(table_divided[i],max_param,params_as_matrix[i]) for i in range(len(table_divided))] # to extract param
-    #print(f'{matrix_form=}')
-    new_table = [mutation_HM_null(table_divided[i],matrix_form[i],ind[i],mut_param,0,1) for i in range(len(table_divided))]
-
-    return new_table,c,s
-
-
 
 
 ### These functions chooses Adult communities and reproduces them to Newborn communities ###
@@ -1993,14 +1592,12 @@ def mature(params_HM,c0,table_HM,mut_param,step,t):
     '''
     loop = int(t/step)
     for i in range(loop):
-        print(i)
     #for i in range(1):
         if i == 0:
-            #new_table,c,s = cell_cycle_HM(table_HM,params_HM,c0,mut_param,step)
-            new_table,c,s = comm_dynamics_new(table_HM,params_HM,c0,mut_param,step)
+            new_table,c,s = cell_cycle_HM(table_HM,params_HM,c0,mut_param,step)
             new_table = [delete_rows(new_table[i]) for i in range(len(new_table))]
         else:
-            new_table,c,s = comm_dynamics_new(new_table,params_HM,c0,mut_param,step)
+            new_table,c,s = cell_cycle_HM(new_table,params_HM,c,mut_param,step)
             new_table = [delete_rows(new_table[i]) for i in range(len(new_table))]
     results = [new_table,s,c[-1]]
     #print(results)
@@ -2105,7 +1702,8 @@ def community_selection(C,t,step,mut_param,params_HM,c0,BM_target,Newborns,top_a
         file_name - the name of the file in string form. Type: string 
     Output: 
         The final Adult community after "C" number of cycles
-    '''
+        '''
+    
     for j in range(C):
         results_all1 = community_(j, t, step,mut_param,params_HM,c0,Newborns,parallel,file_name)
         Newborns = pipette(results_all1, top_adults_num, BM_target, max_newborn)

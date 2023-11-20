@@ -1,4 +1,20 @@
-from trial import *
+#from trial import *
+import numpy as np
+import pandas as pd
+
+def biomass_init(table):
+    '''
+    Calculates the biomass of species, which is the number of cells * cell length. 
+    Input: 
+        table - table which contains the species and subpopulations and their population size and length of cells
+    Output: 
+        The biomass value for a species and its subpopulation 
+    '''
+    biomass = table['Number'] * table['Length'] 
+    # This function is bad because it requires the user to name variables as number and length. The same goes 
+    #   for lots of the other functions (any that use dataframes or dictionaries). 
+    #   If this is avoidable, we should change this (and data structures where necessary, hopefully it shouldn't matter).
+    return biomass
 
 # Saturation concentration for H and M species
 K_MR = 1/3
@@ -38,7 +54,7 @@ table_M = pd.DataFrame([[1, 0, 60, 1]], columns= ['Parameter', 'Change', 'Number
 table_HM = [table_H,table_M]
 
 n_s = len(table_HM) # total number of species in the system
-s = np.array([biomass(table_HM[i]) for i in range(n_s)]) # calculating biomass from table with H and M species
+s = np.array([biomass_init(table_HM[i]) for i in range(n_s)]) # calculating biomass from table with H and M species
 
 # Dictionary which contains all the parameters in HM community. 
 params_HM = {}
@@ -58,7 +74,9 @@ P0 = 0
 c0 = np.array([R0,B0,P0]) 
 
 t = 17 # total time of a single maturation cycle
+
 step = 0.05 # the timestep to reach final maturation time T=17
+#t = 2*step
 
 # Mutation parameters 
 s_neg = 0.067 # mutation values for positive, ehancing 

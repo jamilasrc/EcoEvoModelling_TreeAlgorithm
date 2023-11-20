@@ -1,8 +1,7 @@
 from trial import *
 from parameters import *
 
-
-C = 2 # number of cycles of maturation
+C = 1 # number of cycles of maturation
 wells = 100 # the total number of wells or partitions for the next cycle, i.e how many newborn communities required
 Newborns = [table_HM for i in range(wells)] # starting conditions, newborns 
 
